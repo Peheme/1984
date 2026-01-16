@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Social Feed</title>
+    <link rel="stylesheet" href="styles.css">
+    <!-- Font for better typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>Fil de discussion</h1>
+        </header>
+
+        <div class="composer-container">
+            <div class="composer">
+                <textarea id="post-input" placeholder="Quoi de neuf ?" rows="3"></textarea>
+                <div class="composer-actions">
+                    <button id="emoji-btn" class="icon-btn" aria-label="Ajouter un emoji">😊</button>
+                    <button id="post-btn" class="primary-btn">Publier</button>
+                </div>
+                <!-- Simple custom emoji picker container (hidden by default) -->
+                <div id="emoji-picker" class="emoji-picker hidden">
+                    <span class="emoji-option">😀</span><span class="emoji-option">😂</span><span
+                        class="emoji-option">😍</span><span class="emoji-option">🤔</span>
+                    <span class="emoji-option">😎</span><span class="emoji-option">👍</span><span
+                        class="emoji-option">🎉</span><span class="emoji-option">❤️</span>
+                    <span class="emoji-option">🔥</span><span class="emoji-option">✨</span><span
+                        class="emoji-option">🚀</span><span class="emoji-option">💯</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Favorites Section -->
+        <div id="favorites-section" class="favorites-section hidden">
+            <h2 class="section-title">⭐ Favoris</h2>
+            <div id="favorites-feed" class="feed">
+                <!-- Favorite posts will be moved here -->
+            </div>
+            <hr class="section-divider">
+        </div>
+
+        <div id="feed" class="feed">
+            <!-- Posts will be inserted here dynamically -->
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
