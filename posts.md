@@ -10,3 +10,5 @@ author: Pierre-Marie
 ---
 L'avantage de ce fichier Markdown, c'est qu'il est facile à lire et à modifier "à la main". 
 Les messages ajoutés ici apparaîtront sur le site.
+
+Message test

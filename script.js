@@ -1,14 +1,12 @@
 document.addEventListener('DOMContentLoaded', () => {
     // --- SUPABASE CONFIGURATION ---
-    // Please replace these values with your actual project URL and Anon Key from Supabase Dashboard
-    const SUPABASE_URL = 'YOUR_SUPABASE_URL';
-    const SUPABASE_KEY = 'YOUR_SUPABASE_ANON_KEY';
+    const SUPABASE_URL = 'https://npkzsyowqucmqxbgsdfl.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_UEIKkuM1xJTx24VIgssaxw_lQLpl04t';
 
-    // Check if configuration is missing
-    if (SUPABASE_URL === 'https://npkzsyowqucmqxbgsdfl.supabase.co' || SUPABASE_KEY === 'sb_publishable_UEIKkuM1xJTx24VIgssaxw_lQLpl04t') {
-        console.warn('Supabase not configured. Please set SUPABASE_URL and SUPABASE_KEY in script.js');
-        // Fallback or alert? For now just alert in console.
-        alert("Veuillez configurer l'URL et la Clé Supabase dans script.js pour que cela fonctionne !");
+    // Check if configuration is missing (Double check to be safe)
+    if (SUPABASE_URL === 'YOUR_SUPABASE_URL' || SUPABASE_KEY === 'YOUR_SUPABASE_ANON_KEY') {
+        console.warn('Supabase not configured.');
+        alert("Veuillez configurer l'URL et la Clé Supabase dans script.js !");
     }
 
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
