@@ -32,7 +32,8 @@ body {
 }
 
 .container {
-    max-width: 600px;
+    max-width: 900px;
+    /* Increased for sidebar */
     margin: 0 auto;
 }
 
@@ -45,6 +46,74 @@ body {
     font-weight: 600;
     font-size: 1.5rem;
     color: var(--text-primary);
+}
+
+/* Layout Grid */
+.layout-grid {
+    display: grid;
+    grid-template-columns: 1fr 250px;
+    gap: 2rem;
+    align-items: start;
+}
+
+@media (max-width: 768px) {
+    .layout-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .history-sidebar {
+        order: -1;
+        /* Show history on top on mobile? Or bottom? Keeping default for now */
+        margin-bottom: 1rem;
+    }
+}
+
+.main-content {
+    min-width: 0;
+    /* Prevents flex/grid overflow issues */
+}
+
+/* History Sidebar */
+.sidebar-card {
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-sm);
+    position: sticky;
+    top: 1rem;
+}
+
+.sidebar-card h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: var(--text-primary);
+}
+
+.history-list {
+    list-style: none;
+}
+
+.history-item {
+    padding: 0.5rem 0.75rem;
+    border-radius: 6px;
+    cursor: pointer;
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    transition: background 0.2s, color 0.2s;
+    margin-bottom: 0.25rem;
+}
+
+.history-item:hover {
+    background-color: #f3f4f6;
+    color: var(--primary-color);
+}
+
+.history-item.active {
+    background-color: #eff6ff;
+    color: var(--primary-color);
+    font-weight: 500;
 }
 
 /* Composer Styles */

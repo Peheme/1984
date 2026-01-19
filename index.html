@@ -18,36 +18,49 @@
             <h1>Fil de discussion</h1>
         </header>
 
-        <div class="composer-container">
-            <div class="composer">
-                <textarea id="post-input" placeholder="Quoi de neuf ?" rows="3"></textarea>
-                <div class="composer-actions">
-                    <button id="emoji-btn" class="icon-btn" aria-label="Ajouter un emoji">😊</button>
-                    <button id="post-btn" class="primary-btn">Publier</button>
+        <div class="layout-grid">
+            <main class="main-content">
+                <div class="composer-container">
+                    <div class="composer">
+                        <textarea id="post-input" placeholder="Quoi de neuf ?" rows="3"></textarea>
+                        <div class="composer-actions">
+                            <button id="emoji-btn" class="icon-btn" aria-label="Ajouter un emoji">😊</button>
+                            <button id="post-btn" class="primary-btn">Publier</button>
+                        </div>
+                        <!-- Simple custom emoji picker container (hidden by default) -->
+                        <div id="emoji-picker" class="emoji-picker hidden">
+                            <span class="emoji-option">😀</span><span class="emoji-option">😂</span><span
+                                class="emoji-option">😍</span><span class="emoji-option">🤔</span>
+                            <span class="emoji-option">😎</span><span class="emoji-option">👍</span><span
+                                class="emoji-option">🎉</span><span class="emoji-option">❤️</span>
+                            <span class="emoji-option">🔥</span><span class="emoji-option">✨</span><span
+                                class="emoji-option">🚀</span><span class="emoji-option">💯</span>
+                        </div>
+                    </div>
                 </div>
-                <!-- Simple custom emoji picker container (hidden by default) -->
-                <div id="emoji-picker" class="emoji-picker hidden">
-                    <span class="emoji-option">😀</span><span class="emoji-option">😂</span><span
-                        class="emoji-option">😍</span><span class="emoji-option">🤔</span>
-                    <span class="emoji-option">😎</span><span class="emoji-option">👍</span><span
-                        class="emoji-option">🎉</span><span class="emoji-option">❤️</span>
-                    <span class="emoji-option">🔥</span><span class="emoji-option">✨</span><span
-                        class="emoji-option">🚀</span><span class="emoji-option">💯</span>
+
+                <!-- Favorites Section -->
+                <div id="favorites-section" class="favorites-section hidden">
+                    <h2 class="section-title">⭐ Favoris</h2>
+                    <div id="favorites-feed" class="feed">
+                        <!-- Favorite posts will be moved here -->
+                    </div>
+                    <hr class="section-divider">
                 </div>
-            </div>
-        </div>
 
-        <!-- Favorites Section -->
-        <div id="favorites-section" class="favorites-section hidden">
-            <h2 class="section-title">⭐ Favoris</h2>
-            <div id="favorites-feed" class="feed">
-                <!-- Favorite posts will be moved here -->
-            </div>
-            <hr class="section-divider">
-        </div>
+                <div id="feed" class="feed">
+                    <!-- Posts will be inserted here dynamically -->
+                </div>
+            </main>
 
-        <div id="feed" class="feed">
-            <!-- Posts will be inserted here dynamically -->
+            <aside class="history-sidebar">
+                <div class="sidebar-card">
+                    <h3>Historique</h3>
+                    <ul id="history-list" class="history-list">
+                        <li class="history-item active" data-date="all">Tous les messages</li>
+                    </ul>
+                </div>
+            </aside>
         </div>
     </div>
 

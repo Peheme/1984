@@ -7,12 +7,23 @@ document.addEventListener('DOMContentLoaded', () => {
     const emojiBtn = document.getElementById('emoji-btn');
     const emojiPicker = document.getElementById('emoji-picker');
     const emojiOptions = document.querySelectorAll('.emoji-option');
+    const historyList = document.getElementById('history-list');
+
+    let currentFilter = 'all'; // 'all' or 'YYYY-MM'
 
     // Auto-resize textarea
     postInput.addEventListener('input', function () {
         this.style.height = 'auto';
         this.style.height = (this.scrollHeight) + 'px';
         updatePostButton();
+    });
+
+    // Handle Enter to submit (Shift+Enter for newline)
+    postInput.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            createPost();
+        }
     });
 
     // Handle post submission
@@ -76,11 +87,18 @@ document.addEventListener('DOMContentLoaded', () => {
         const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         const dateString = now.toLocaleDateString([], { day: 'numeric', month: 'short' });
 
+        // Store raw date for filtering
+        // Format YYYY-MM
+        const monthKey = now.toLocaleString('default', { month: 'long' }) + ' ' + now.getFullYear(); // e.g., "Janvier 2024"
+        const filterKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`; // e.g., "2024-01"
+
+        postElement.dataset.date = filterKey;
+
         postElement.innerHTML = `
             <div class="post-header">
                 <div class="avatar">👤</div>
                 <div class="post-meta">
-                    <span class="author-name">Moi</span>
+                    <span class="author-name">Pierre-Marie</span>
                     <span class="post-time">${dateString} à ${timeString}</span>
                 </div>
             </div>
@@ -108,10 +126,67 @@ document.addEventListener('DOMContentLoaded', () => {
 
         feed.prepend(postElement);
 
+        // Update history sidebar
+        updateHistory(filterKey, monthKey);
+
+        // Apply current filter (if we are viewing 'all' or this specific month, show it. Else hide it?)
+        // Actually, if we prepend, we just need to re-verify visibility.
+        if (currentFilter !== 'all' && currentFilter !== filterKey) {
+            postElement.style.display = 'none';
+        }
+
         // Reset input
         postInput.value = '';
         postInput.style.height = 'auto';
         updatePostButton();
+    }
+
+    // History Sidebar Logic
+    const historyMap = new Set();
+
+    function updateHistory(filterKey, displayString) {
+        if (!historyMap.has(filterKey)) {
+            historyMap.add(filterKey);
+
+            // Allow duplicates in UI? No, check if exists.
+            // In a real app we'd sort these.
+
+            const existingItem = document.querySelector(`.history-item[data-date="${filterKey}"]`);
+            if (!existingItem) {
+                const li = document.createElement('li');
+                li.className = 'history-item';
+                li.dataset.date = filterKey;
+                // Capitalize first letter
+                li.textContent = displayString.charAt(0).toUpperCase() + displayString.slice(1);
+
+                li.addEventListener('click', () => filterPosts(filterKey, li));
+
+                historyList.appendChild(li); // append keeps "All" at top usually
+            }
+        }
+    }
+
+    // Default "All" click handler
+    document.querySelector('.history-item[data-date="all"]').addEventListener('click', function () {
+        filterPosts('all', this);
+    });
+
+    function filterPosts(key, clickedItem) {
+        currentFilter = key;
+
+        // Update active class
+        document.querySelectorAll('.history-item').forEach(item => item.classList.remove('active'));
+        clickedItem.classList.add('active');
+
+        // Update feed visibility
+        const posts = document.querySelectorAll('.post');
+        posts.forEach(post => {
+            if (key === 'all' || post.dataset.date === key) {
+                post.style.display = 'block';
+            } else {
+                post.style.display = 'none';
+            }
+        });
     }
 
     // Make functions global so they can be called from inline onclick
@@ -120,6 +195,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const post = btn.closest('.post');
             post.remove();
             checkFavoritesEmpty();
+            // In a real app, we might check if we need to remove a history item, 
+            // but for now we keep it simple (it remains even if empty).
         }
     };
 
