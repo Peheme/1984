@@ -63,6 +63,110 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+    // Load posts from LocalStorage AND Markdown file on startup
+    loadAllPosts();
+
+    async function loadAllPosts() {
+        let localPosts = JSON.parse(localStorage.getItem('social_posts') || '[]');
+        let markdownPosts = await fetchMarkdownPosts();
+
+        // Combine and sort
+        let allPosts = [...localPosts, ...markdownPosts];
+
+        // Deduplicate by ID if needed (though IDs usually time-based)
+        const uniquePosts = Array.from(new Map(allPosts.map(item => [item.id, item])).values());
+
+        // Sort oldest to newest (renderPost prepends, so result is newest on top)
+        uniquePosts.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+        uniquePosts.forEach(post => {
+            renderPost(post);
+        });
+    }
+
+    async function fetchMarkdownPosts() {
+        try {
+            const response = await fetch('posts.md');
+            if (!response.ok) return [];
+            const text = await response.text();
+            return parseMarkdown(text);
+        } catch (e) {
+            console.error("Could not load posts.md", e);
+            return [];
+        }
+    }
+
+    function parseMarkdown(text) {
+        const posts = [];
+        // Simple frontmatter-like parsing
+        // Split by separator "---"
+        const chunks = text.split('---').map(c => c.trim()).filter(c => c);
+
+        // Each post consists of metadata chunk (key:value) then content, or combined?
+        // My format: 
+        // ---
+        // meta
+        // ---
+        // content
+
+        // So chunk[0] is meta, chunk[1] is content? Not guaranteed with split.
+        // Let's rely on standard Frontmatter parsing logic simplification:
+
+        // If we split by '---', the odd indices are metadata, even are content (if file starts with ---)
+        // Example:
+        // (empty)
+        // --- [1]
+        // meta
+        // --- [2]
+        // content
+        // --- [3]
+        // meta
+
+        // My file starts with ---. So split results:
+        // [0] = empty (before first ---)
+        // [1] = meta 1
+        // [2] = content 1
+        // [3] = meta 2
+        // [4] = content 2
+
+        // Loop step 2
+        let i = 0;
+        while (i < chunks.length) {
+            if (i + 1 >= chunks.length) break;
+
+            const metaStr = chunks[i];
+            const contentStr = chunks[i + 1];
+
+            // Parse Meta
+            const meta = {};
+            metaStr.split('\n').forEach(line => {
+                const [key, ...val] = line.split(':');
+                if (key && val) meta[key.trim()] = val.join(':').trim();
+            });
+
+            if (meta.date && contentStr) {
+                posts.push({
+                    id: 'md-' + new Date(meta.date).getTime(), // special ID prefix
+                    content: contentStr,
+                    timestamp: new Date(meta.date).toISOString(),
+                    author: meta.author || 'Inconnu',
+                    favorites: false,
+                    source: 'markdown' // Flag to prevent deleting from localStorage (optional)
+                });
+            }
+
+            i += 2;
+        }
+        return posts;
+    }
+
+    // Storage Functions
+    function savePost(post) {
+        let posts = JSON.parse(localStorage.getItem('social_posts') || '[]');
+        posts.push(post);
+        localStorage.setItem('social_posts', JSON.stringify(posts));
+    }
+
     function updatePostButton() {
         if (postInput.value.trim().length > 0) {
             postBtn.removeAttribute('disabled');
