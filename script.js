@@ -1,4 +1,18 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // --- SUPABASE CONFIGURATION ---
+    // Please replace these values with your actual project URL and Anon Key from Supabase Dashboard
+    const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+    const SUPABASE_KEY = 'YOUR_SUPABASE_ANON_KEY';
+
+    // Check if configuration is missing
+    if (SUPABASE_URL === 'https://npkzsyowqucmqxbgsdfl.supabase.co' || SUPABASE_KEY === 'sb_publishable_UEIKkuM1xJTx24VIgssaxw_lQLpl04t') {
+        console.warn('Supabase not configured. Please set SUPABASE_URL and SUPABASE_KEY in script.js');
+        // Fallback or alert? For now just alert in console.
+        alert("Veuillez configurer l'URL et la Clé Supabase dans script.js pour que cela fonctionne !");
+    }
+
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
     const postInput = document.getElementById('post-input');
     const postBtn = document.getElementById('post-btn');
     const feed = document.getElementById('feed');
@@ -10,6 +24,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const historyList = document.getElementById('history-list');
 
     let currentFilter = 'all'; // 'all' or 'YYYY-MM'
+
+    // Load posts from Supabase on startup
+    fetchPosts();
 
     // Auto-resize textarea
     postInput.addEventListener('input', function () {
@@ -35,13 +52,12 @@ document.addEventListener('DOMContentLoaded', () => {
         emojiPicker.classList.toggle('hidden');
     });
 
-    // Close picker when clicking outside
+    // Close picker when clicking outside & close share menus
     document.addEventListener('click', (e) => {
         if (!emojiPicker.contains(e.target) && e.target !== emojiBtn) {
             emojiPicker.classList.add('hidden');
         }
 
-        // Also close any open share menus
         document.querySelectorAll('.share-menu').forEach(menu => {
             if (!menu.classList.contains('hidden')) {
                 menu.classList.add('hidden');
@@ -63,110 +79,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Load posts from LocalStorage AND Markdown file on startup
-    loadAllPosts();
-
-    async function loadAllPosts() {
-        let localPosts = JSON.parse(localStorage.getItem('social_posts') || '[]');
-        let markdownPosts = await fetchMarkdownPosts();
-
-        // Combine and sort
-        let allPosts = [...localPosts, ...markdownPosts];
-
-        // Deduplicate by ID if needed (though IDs usually time-based)
-        const uniquePosts = Array.from(new Map(allPosts.map(item => [item.id, item])).values());
-
-        // Sort oldest to newest (renderPost prepends, so result is newest on top)
-        uniquePosts.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-
-        uniquePosts.forEach(post => {
-            renderPost(post);
-        });
-    }
-
-    async function fetchMarkdownPosts() {
-        try {
-            const response = await fetch('posts.md');
-            if (!response.ok) return [];
-            const text = await response.text();
-            return parseMarkdown(text);
-        } catch (e) {
-            console.error("Could not load posts.md", e);
-            return [];
-        }
-    }
-
-    function parseMarkdown(text) {
-        const posts = [];
-        // Simple frontmatter-like parsing
-        // Split by separator "---"
-        const chunks = text.split('---').map(c => c.trim()).filter(c => c);
-
-        // Each post consists of metadata chunk (key:value) then content, or combined?
-        // My format: 
-        // ---
-        // meta
-        // ---
-        // content
-
-        // So chunk[0] is meta, chunk[1] is content? Not guaranteed with split.
-        // Let's rely on standard Frontmatter parsing logic simplification:
-
-        // If we split by '---', the odd indices are metadata, even are content (if file starts with ---)
-        // Example:
-        // (empty)
-        // --- [1]
-        // meta
-        // --- [2]
-        // content
-        // --- [3]
-        // meta
-
-        // My file starts with ---. So split results:
-        // [0] = empty (before first ---)
-        // [1] = meta 1
-        // [2] = content 1
-        // [3] = meta 2
-        // [4] = content 2
-
-        // Loop step 2
-        let i = 0;
-        while (i < chunks.length) {
-            if (i + 1 >= chunks.length) break;
-
-            const metaStr = chunks[i];
-            const contentStr = chunks[i + 1];
-
-            // Parse Meta
-            const meta = {};
-            metaStr.split('\n').forEach(line => {
-                const [key, ...val] = line.split(':');
-                if (key && val) meta[key.trim()] = val.join(':').trim();
-            });
-
-            if (meta.date && contentStr) {
-                posts.push({
-                    id: 'md-' + new Date(meta.date).getTime(), // special ID prefix
-                    content: contentStr,
-                    timestamp: new Date(meta.date).toISOString(),
-                    author: meta.author || 'Inconnu',
-                    favorites: false,
-                    source: 'markdown' // Flag to prevent deleting from localStorage (optional)
-                });
-            }
-
-            i += 2;
-        }
-        return posts;
-    }
-
-    // Storage Functions
-    function savePost(post) {
-        let posts = JSON.parse(localStorage.getItem('social_posts') || '[]');
-        posts.push(post);
-        localStorage.setItem('social_posts', JSON.stringify(posts));
-    }
-
     function updatePostButton() {
         if (postInput.value.trim().length > 0) {
             postBtn.removeAttribute('disabled');
@@ -178,23 +90,83 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize button state
     updatePostButton();
 
-    function createPost() {
+    async function createPost() {
         const content = postInput.value.trim();
         if (!content) return;
 
+        // Insert into Supabase
+        const { data, error } = await supabase
+            .from('posts')
+            .insert([
+                {
+                    content: content,
+                    author: 'Pierre-Marie',
+                    favorites: false
+                    // created_at is auto-generated by DB
+                }
+            ])
+            .select();
+
+        if (error) {
+            console.error('Error creating post:', error);
+            alert('Erreur lors de la publication du message.');
+            return;
+        }
+
+        if (data && data.length > 0) {
+            const newPost = data[0];
+            renderPost(newPost, true); // true = prepend (newest)
+
+            // Reset input
+            postInput.value = '';
+            postInput.style.height = 'auto';
+            updatePostButton();
+        }
+    }
+
+    async function fetchPosts() {
+        // Fetch all posts, ordered by creation date (newest first)
+        const { data, error } = await supabase
+            .from('posts')
+            .select('*')
+            .order('created_at', { ascending: true }); // We render by prepending, so we want OLDEST first to end up with NEWEST on top?
+        // Actually:
+        // If we use prepend() in renderPost, the last item processed ends up at the TOP.
+        // So if we process 1, then 2, then 3. 
+        // Feed: [3] [2] [1]
+        // So we want to process Oldest -> Newest (Ascending).
+        // So default sort ASC is correct.
+
+        if (error) {
+            console.error('Error fetching posts:', error);
+            return;
+        }
+
+        // Clear feed before rendering? Or assume empty on load.
+        feed.innerHTML = '';
+        favoritesFeed.innerHTML = '';
+        historyList.innerHTML = '<li class="history-item active" data-date="all">Tous les messages</li>';
+        historyMap.clear();
+
+        if (data) {
+            data.forEach(post => {
+                renderPost(post, true); // prepend
+            });
+        }
+    }
+
+    // We used to have renderPost prepend.
+    function renderPost(post, prepend = true) {
         const postElement = document.createElement('div');
         postElement.className = 'post';
-        // Unique ID for the post to handle state if needed
-        const postId = Date.now();
+        postElement.dataset.id = post.id;
 
-        const now = new Date();
-        const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        const dateString = now.toLocaleDateString([], { day: 'numeric', month: 'short' });
+        const date = new Date(post.created_at);
+        const timeString = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const dateString = date.toLocaleDateString([], { day: 'numeric', month: 'short' });
 
-        // Store raw date for filtering
-        // Format YYYY-MM
-        const monthKey = now.toLocaleString('default', { month: 'long' }) + ' ' + now.getFullYear(); // e.g., "Janvier 2024"
-        const filterKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`; // e.g., "2024-01"
+        const monthKey = date.toLocaleString('default', { month: 'long' }) + ' ' + date.getFullYear();
+        const filterKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
 
         postElement.dataset.date = filterKey;
 
@@ -202,14 +174,14 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="post-header">
                 <div class="avatar">👤</div>
                 <div class="post-meta">
-                    <span class="author-name">Pierre-Marie</span>
+                    <span class="author-name">${escapeHtml(post.author || 'Inconnu')}</span>
                     <span class="post-time">${dateString} à ${timeString}</span>
                 </div>
             </div>
-            <div class="post-content">${escapeHtml(content)}</div>
+            <div class="post-content">${escapeHtml(post.content)}</div>
             <div class="post-actions">
-                <button class="action-btn favorite" onclick="toggleFavorite(${postId}, this)">
-                    <span>⭐</span> Favori
+                <button class="action-btn favorite ${post.favorites ? 'active' : ''}" onclick="toggleFavorite(${post.id}, this)">
+                    <span>${post.favorites ? '🌟' : '⭐'}</span> ${post.favorites ? 'Retirer des favoris' : 'Favori'}
                 </button>
                 <div style="position: relative;">
                     <button class="action-btn share" onclick="toggleShareMenu(event, this)">
@@ -217,113 +189,88 @@ document.addEventListener('DOMContentLoaded', () => {
                     </button>
                     <div class="share-menu hidden">
                         <a href="https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}" target="_blank" class="share-option">Facebook</a>
-                        <a href="https://twitter.com/intent/tweet?text=${encodeURIComponent(content)}" target="_blank" class="share-option">Twitter</a>
-                        <a href="https://wa.me/?text=${encodeURIComponent(content)}" target="_blank" class="share-option">WhatsApp</a>
+                        <a href="https://twitter.com/intent/tweet?text=${encodeURIComponent(post.content)}" target="_blank" class="share-option">Twitter</a>
+                        <a href="https://wa.me/?text=${encodeURIComponent(post.content)}" target="_blank" class="share-option">WhatsApp</a>
                     </div>
                 </div>
                 <!-- Admin only delete button -->
-                <button class="action-btn delete" onclick="deletePost(this)">
+                <button class="action-btn delete" onclick="deletePost(${post.id}, this)">
                     <span>🗑️</span> Supprimer
                 </button>
             </div>
         `;
 
-        feed.prepend(postElement);
+        // Handle where to insert
+        const feeContainer = post.favorites ? favoritesFeed : feed;
 
-        // Update history sidebar
+        if (prepend) {
+            feeContainer.prepend(postElement);
+        } else {
+            feeContainer.appendChild(postElement);
+        }
+
+        if (post.favorites) {
+            favoritesSection.classList.remove('hidden');
+        }
+
         updateHistory(filterKey, monthKey);
 
-        // Apply current filter (if we are viewing 'all' or this specific month, show it. Else hide it?)
-        // Actually, if we prepend, we just need to re-verify visibility.
+        // Apply current filter
         if (currentFilter !== 'all' && currentFilter !== filterKey) {
             postElement.style.display = 'none';
         }
-
-        // Reset input
-        postInput.value = '';
-        postInput.style.height = 'auto';
-        updatePostButton();
     }
 
-    // History Sidebar Logic
-    const historyMap = new Set();
-
-    function updateHistory(filterKey, displayString) {
-        if (!historyMap.has(filterKey)) {
-            historyMap.add(filterKey);
-
-            // Allow duplicates in UI? No, check if exists.
-            // In a real app we'd sort these.
-
-            const existingItem = document.querySelector(`.history-item[data-date="${filterKey}"]`);
-            if (!existingItem) {
-                const li = document.createElement('li');
-                li.className = 'history-item';
-                li.dataset.date = filterKey;
-                // Capitalize first letter
-                li.textContent = displayString.charAt(0).toUpperCase() + displayString.slice(1);
-
-                li.addEventListener('click', () => filterPosts(filterKey, li));
-
-                historyList.appendChild(li); // append keeps "All" at top usually
-            }
-        }
-    }
-
-    // Default "All" click handler
-    document.querySelector('.history-item[data-date="all"]').addEventListener('click', function () {
-        filterPosts('all', this);
-    });
-
-    function filterPosts(key, clickedItem) {
-        currentFilter = key;
-
-        // Update active class
-        document.querySelectorAll('.history-item').forEach(item => item.classList.remove('active'));
-        clickedItem.classList.add('active');
-
-        // Update feed visibility
-        const posts = document.querySelectorAll('.post');
-        posts.forEach(post => {
-            if (key === 'all' || post.dataset.date === key) {
-                post.style.display = 'block';
-            } else {
-                post.style.display = 'none';
-            }
-        });
-    }
-
-    // Make functions global so they can be called from inline onclick
-    window.deletePost = function (btn) {
+    // Making functions global and async where needed
+    window.deletePost = async function (id, btn) {
         if (confirm("Voulez-vous vraiment supprimer ce post ?")) {
+            const { error } = await supabase
+                .from('posts')
+                .delete()
+                .eq('id', id);
+
+            if (error) {
+                console.error('Error deleting post:', error);
+                alert('Erreur lors de la suppression.');
+                return;
+            }
+
             const post = btn.closest('.post');
             post.remove();
             checkFavoritesEmpty();
-            // In a real app, we might check if we need to remove a history item, 
-            // but for now we keep it simple (it remains even if empty).
         }
     };
 
-    window.toggleFavorite = function (id, btn) {
+    window.toggleFavorite = async function (id, btn) {
         const post = btn.closest('.post');
-        const isFavorite = btn.classList.toggle('active');
+        const isFavorite = !btn.classList.contains('active'); // Toggling to NEW state
 
+        const { error } = await supabase
+            .from('posts')
+            .update({ favorites: isFavorite })
+            .eq('id', id);
+
+        if (error) {
+            console.error('Error updating favorite:', error);
+            alert('Erreur lors de la mise à jour.');
+            return;
+        }
+
+        // Update UI
+        btn.classList.toggle('active');
         if (isFavorite) {
-            // Move to favorites
             btn.innerHTML = '<span>🌟</span> Retirer des favoris';
             favoritesFeed.prepend(post);
             favoritesSection.classList.remove('hidden');
         } else {
-            // Move back to main feed
             btn.innerHTML = '<span>⭐</span> Favori';
-            feed.prepend(post); // Moves it to top of feed basically (simplification)
+            feed.prepend(post);
             checkFavoritesEmpty();
         }
     };
 
     window.toggleShareMenu = function (e, btn) {
         e.stopPropagation();
-        // Close other open menus
         document.querySelectorAll('.share-menu').forEach(menu => menu.classList.add('hidden'));
 
         const menu = btn.nextElementSibling;
@@ -336,7 +283,49 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // History Sidebar Logic
+    const historyMap = new Set();
+
+    function updateHistory(filterKey, displayString) {
+        if (!historyMap.has(filterKey)) {
+            historyMap.add(filterKey);
+
+            const existingItem = document.querySelector(`.history-item[data-date="${filterKey}"]`);
+            if (!existingItem) {
+                const li = document.createElement('li');
+                li.className = 'history-item';
+                li.dataset.date = filterKey;
+                li.textContent = displayString.charAt(0).toUpperCase() + displayString.slice(1);
+
+                li.addEventListener('click', () => filterPosts(filterKey, li));
+
+                historyList.appendChild(li);
+            }
+        }
+    }
+
+    document.querySelector('.history-item[data-date="all"]').addEventListener('click', function () {
+        filterPosts('all', this);
+    });
+
+    function filterPosts(key, clickedItem) {
+        currentFilter = key;
+
+        document.querySelectorAll('.history-item').forEach(item => item.classList.remove('active'));
+        clickedItem.classList.add('active');
+
+        const posts = document.querySelectorAll('.post');
+        posts.forEach(post => {
+            if (key === 'all' || post.dataset.date === key) {
+                post.style.display = 'block';
+            } else {
+                post.style.display = 'none';
+            }
+        });
+    }
+
     function escapeHtml(text) {
+        if (!text) return '';
         const map = {
             '&': '&amp;',
             '<': '&lt;',
