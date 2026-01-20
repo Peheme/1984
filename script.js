@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    window.supabaseClient = supabase; // Expose for debugging
 
     const postInput = document.getElementById('post-input');
     const postBtn = document.getElementById('post-btn');
