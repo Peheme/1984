@@ -14,6 +14,23 @@
     --danger-color: #ef4444;
     --warning-color: #f59e0b;
     --success-color: #10b981;
+    --header-btn-hover: #f3f4f6;
+}
+
+body.dark-mode {
+    --bg-color: #111827;
+    /* Dark grayish blue */
+    --card-bg: #1f2937;
+    --text-primary: #f9fafb;
+    --text-secondary: #9ca3af;
+    --primary-color: #3b82f6;
+    --primary-hover: #60a5fa;
+    --border-color: #374151;
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+    --header-btn-hover: #374151;
+    --danger-color: #f87171;
+    --warning-color: #fbbf24;
 }
 
 * {
@@ -40,6 +57,30 @@ body {
 .header {
     margin-bottom: 2rem;
     text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    padding: 0 1rem;
+}
+
+.theme-toggle {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 1.5rem;
+    padding: 0.5rem;
+    border-radius: 50%;
+    transition: background-color 0.2s;
+    line-height: 1;
+}
+
+.theme-toggle:hover {
+    background-color: var(--header-btn-hover);
 }
 
 .header h1 {
@@ -106,12 +147,12 @@ body {
 }
 
 .history-item:hover {
-    background-color: #f3f4f6;
+    background-color: var(--border-color);
     color: var(--primary-color);
 }
 
 .history-item.active {
-    background-color: #eff6ff;
+    background-color: rgba(37, 99, 235, 0.1);
     color: var(--primary-color);
     font-weight: 500;
 }
@@ -129,7 +170,7 @@ body {
 
 .composer-container:focus-within {
     box-shadow: var(--shadow-md);
-    border-color: #d1d5db;
+    border-color: var(--primary-color);
 }
 
 .composer textarea {
@@ -145,7 +186,8 @@ body {
 }
 
 .composer textarea::placeholder {
-    color: #9ca3af;
+    color: var(--text-secondary);
+    opacity: 0.7;
 }
 
 .composer-actions {
@@ -167,7 +209,7 @@ body {
 }
 
 .icon-btn:hover {
-    background-color: #f3f4f6;
+    background-color: var(--header-btn-hover);
     color: var(--text-primary);
 }
 
@@ -193,7 +235,8 @@ body {
 }
 
 .primary-btn:disabled {
-    background-color: #9ca3af;
+    background-color: var(--text-secondary);
+    opacity: 0.5;
     cursor: not-allowed;
 }
 
@@ -228,7 +271,7 @@ body {
 }
 
 .emoji-option:hover {
-    background-color: #f3f4f6;
+    background-color: var(--border-color);
 }
 
 /* Feed Styles */
@@ -270,7 +313,7 @@ body {
 .avatar {
     width: 40px;
     height: 40px;
-    background-color: #e5e7eb;
+    background-color: var(--border-color);
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -308,7 +351,7 @@ body {
     display: flex;
     gap: 0.5rem;
     padding-top: 0.75rem;
-    border-top: 1px solid #f3f4f6;
+    border-top: 1px solid var(--border-color);
 }
 
 .action-btn {
@@ -327,18 +370,18 @@ body {
 }
 
 .action-btn:hover {
-    background-color: #f3f4f6;
+    background-color: var(--border-color);
 }
 
 /* Specific Action Colors On Hover/Active */
 .action-btn.delete:hover {
     color: var(--danger-color);
-    background-color: #fee2e2;
+    background-color: rgba(239, 68, 68, 0.1);
 }
 
 .action-btn.favorite:hover {
     color: var(--warning-color);
-    background-color: #fef3c7;
+    background-color: rgba(245, 158, 11, 0.1);
 }
 
 .action-btn.favorite.active {
@@ -347,7 +390,7 @@ body {
 
 .action-btn.share:hover {
     color: var(--primary-color);
-    background-color: #dbeafe;
+    background-color: rgba(37, 99, 235, 0.1);
 }
 
 /* Share Menu */
@@ -356,7 +399,7 @@ body {
     bottom: 3.5rem;
     /* above the button row roughly */
     left: 2rem;
-    background: white;
+    background: var(--card-bg);
     box-shadow: var(--shadow-md);
     border: 1px solid var(--border-color);
     border-radius: 8px;
@@ -381,7 +424,7 @@ body {
 }
 
 .share-option:hover {
-    background-color: #f3f4f6;
+    background-color: var(--border-color);
 }
 
 /* Favorites Section */
@@ -405,6 +448,6 @@ body {
 
 .section-divider {
     border: 0;
-    border-top: 2px dashed #e5e7eb;
+    border-top: 2px dashed var(--border-color);
     margin-top: 2rem;
 }

@@ -21,6 +21,28 @@ document.addEventListener('DOMContentLoaded', () => {
     const emojiPicker = document.getElementById('emoji-picker');
     const emojiOptions = document.querySelectorAll('.emoji-option');
     const historyList = document.getElementById('history-list');
+    const themeToggle = document.getElementById('theme-toggle');
+
+    // --- DARK MODE LOGIC ---
+    function initTheme() {
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'dark') {
+            document.body.classList.add('dark-mode');
+            themeToggle.textContent = '☀️';
+        } else {
+            document.body.classList.remove('dark-mode');
+            themeToggle.textContent = '🌙';
+        }
+    }
+
+    initTheme();
+
+    themeToggle.addEventListener('click', () => {
+        document.body.classList.toggle('dark-mode');
+        const isDark = document.body.classList.contains('dark-mode');
+        themeToggle.textContent = isDark ? '☀️' : '🌙';
+        localStorage.setItem('theme', isDark ? 'dark' : 'light');
+    });
 
     let currentFilter = 'all'; // 'all' or 'YYYY-MM'
 
