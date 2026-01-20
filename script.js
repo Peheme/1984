@@ -285,6 +285,16 @@ document.addEventListener('DOMContentLoaded', () => {
     // History Sidebar Logic
     const historyMap = new Set();
 
+    // Event Delegation for History List
+    historyList.addEventListener('click', (e) => {
+        if (e.target.classList.contains('history-item')) {
+            const filterKey = e.target.dataset.date;
+            filterPosts(filterKey, e.target);
+        }
+    });
+
+    // Remove old manual loop if exists or just rely on delegation.
+    // The updateHistory function was adding listeners individually. We should remove that.
     function updateHistory(filterKey, displayString) {
         if (!historyMap.has(filterKey)) {
             historyMap.add(filterKey);
@@ -296,16 +306,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 li.dataset.date = filterKey;
                 li.textContent = displayString.charAt(0).toUpperCase() + displayString.slice(1);
 
-                li.addEventListener('click', () => filterPosts(filterKey, li));
+                // No need to add listener here anymore due to delegation
 
                 historyList.appendChild(li);
             }
         }
     }
-
-    document.querySelector('.history-item[data-date="all"]').addEventListener('click', function () {
-        filterPosts('all', this);
-    });
 
     function filterPosts(key, clickedItem) {
         currentFilter = key;
